@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [ltree, pg_trgm]
+}
+
+model User {
+  id           Int     @id @default(autoincrement())
+  uid          String  @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username     String  @unique
+  email        String  @unique
+  firstName    String
+  lastName     String?
+  passwordHash String
+  passwordSalt String
+  todo         Todo[]
+
+  @@index([username(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([email(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([lastName(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+model Todo {
+  id          Int     @id @default(autoincrement())
+  uid         String  @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  isCompleted Boolean @default(false)
+  userId      Int
+  user        User    @relation(fields: [userId], references: [id])
+
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin)
+}
