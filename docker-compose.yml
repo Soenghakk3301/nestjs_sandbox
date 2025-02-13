@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '${APP_PORT}:3000'
+      - '${APP_PORT:-3000}:3000' # <-- Correct syntax for ports
     env_file:
       - .env
     depends_on:
@@ -17,7 +17,7 @@ services:
   postgres:
     image: postgres:17-alpine
     ports:
-      - '${POSTGRES_PORT}:5432'
+      - '${POSTGRES_PORT:-5432}:5432' # <-- Correct syntax for ports
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -33,3 +33,4 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
