@@ -3,4 +3,4 @@ dist
 .git
 Dockerfile
 .dockerignore
-.env
+# .env

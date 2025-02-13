@@ -2,17 +2,20 @@ version: '3.8'
 
 services:
   app:
-    container_name: app
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - '${APP_PORT}:3000'
     env_file:
       - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    restart: always
+
   postgres:
-    container_name: postgres
-    image: postgres:latest
+    image: postgres:17-alpine
     ports:
       - '${POSTGRES_PORT}:5432'
     environment:
@@ -21,6 +24,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
