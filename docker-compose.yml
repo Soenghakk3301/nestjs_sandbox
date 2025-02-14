@@ -77,4 +77,4 @@ networks:
 volumes:
   postgres_data:
   certs:
-    external: true
+    external: false
