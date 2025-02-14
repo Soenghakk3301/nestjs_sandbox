@@ -55,7 +55,7 @@ services:
     volumes:
       - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - '/var/log/nginx:/var/log/nginx'
-      - certs:/etc/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - app
     environment:
@@ -77,3 +77,4 @@ networks:
 volumes:
   postgres_data:
   certs:
+    external: true
