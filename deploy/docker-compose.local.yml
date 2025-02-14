@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   app:
     build:
@@ -12,13 +13,8 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - default
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: '256M'
+      - default # Attach app to the webnet network
+    restart: always
 
   postgres:
     container_name: postgres
@@ -38,40 +34,30 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - default
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: '128M'
+      - default # Attach postgres to the webnet network
+    restart: always
 
-  nginx:
+  nginx: # <-- Add Nginx service (for reverse proxying when you deploy)
     container_name: nginx
-    image: nginx:latest
+    image: nginx:latest # Use the latest Nginx image
     ports:
-      - '80:80'
-      - '443:443'
+      - '80:80' # Maps host port 80 to container port 80 (HTTP) - For production
+      - '443:443' # Maps host port 443 to container port 443 (HTTPS) - For production
     volumes:
-      - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - '/var/log/nginx:/var/log/nginx'
-      - /etc/ssl:/etc/ssl:ro
+      - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro # Mount Nginx configuration
+      - '/var/log/nginx:/var/log/nginx' # Mount Nginx logs
+      - ./certs:/etc/ssl/certs:ro # Volume for Let's Encrypt certificates
     depends_on:
-      - app
+      - app # Ensure app is running before Nginx
     environment:
       - APP_PORT
       - DOMAIN
     networks:
       - default
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: '64M'
+    restart: always
 
 networks:
-  default:
+  default: # Define a network for communication
     name: ${NETWORK_NAME}
 
 volumes:
