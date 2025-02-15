@@ -1,0 +1,19 @@
+name: CI/CD for NestJS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18-alpine
