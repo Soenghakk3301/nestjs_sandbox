@@ -92,10 +92,10 @@ jobs:
             ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && rm << pipeline.parameters.archive_name >>"
 
 workflows:
-  sandbox:
+  version: 2
+  main_only:
     jobs:
       - deploy_dev:
           filters:
             branches:
-              only:
-                - main
+              only: main
