@@ -91,7 +91,7 @@ workflows:
   sandbox:
     jobs:
       - deploy_dev:
-        filters:
-          branches:
-            only:
-              - main
+          filters:
+            branches:
+              only:
+                - main
