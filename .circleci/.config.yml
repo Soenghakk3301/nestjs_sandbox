@@ -1,0 +1,97 @@
+version: 2.1
+
+parameters:
+  remote_workingdir:
+    type: string
+    default: 'nestjs_sandbox'
+  archive_name:
+    type: string
+    default: 'build.tar'
+
+jobs:
+  deploy_dev:
+    machine:
+      image: ubuntu-2004:current
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-yarn-deps-build-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: 'Building Latest Docker Image'
+          command: |
+            docker build -t 'nestjs_sandbox'  -f 'deploy/Dockerfile' .
+      - run:
+          name: 'Installing Dependencies'
+          command: |
+            docker run --interactive --volume $PWD:/app:rw nestjs_sandbox yarn install
+      - run:
+          name: 'Generating prisma models'
+          command: |
+            docker run --interactive --volume $PWD:/app:rw nestjs_sandbox yarn prisma generate
+      - save_cache:
+          key: v1-yarn-deps-build-{{ .Branch }}-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: 'Building App'
+          command: |
+            docker run --interactive --volume $PWD:/app:rw nestjs_sandbox yarn build
+
+      - run:
+          name: 'Archiving Build'
+          command: |
+            tar cvf << pipeline.parameters.archive_name >> deploy/
+            tar rvf << pipeline.parameters.archive_name >> dist/
+            tar rvf << pipeline.parameters.archive_name >> node_modules/
+            tar rvf << pipeline.parameters.archive_name >> prisma/
+            tar rvf << pipeline.parameters.archive_name >> nest-cli.json
+            tar rvf << pipeline.parameters.archive_name >> package.json
+            tar rvf << pipeline.parameters.archive_name >> tsconfig.build.json
+            tar rvf << pipeline.parameters.archive_name >> tsconfig.json
+            tar rvf << pipeline.parameters.archive_name >> yarn.lock
+
+      - run:
+          name: 'Copying Build To Remote Server'
+          command: |
+            scp << pipeline.parameters.archive_name >> $SSH_USER_DEV@$SSH_HOST_DEV:<< pipeline.parameters.remote_workingdir >>
+
+      - run:
+          name: 'Unzipping Build'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && tar xvf << pipeline.parameters.archive_name >>"
+
+      - run:
+          name: 'Creating Symlink for .env'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && ln -sf ../.env deploy"
+
+      - run:
+          name: 'Starting Containers'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && sh deploy/start_containers.sh"
+
+      - run:
+          name: 'Migrating Database'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && sh deploy/migrate_db.sh"
+
+      - run:
+          name: 'Rebooting App Container'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && sh deploy/reboot_app.sh"
+
+      - run:
+          name: 'Removing The Archive'
+          command: |
+            ssh $SSH_USER_DEV@$SSH_HOST_DEV "cd << pipeline.parameters.remote_workingdir >> && rm << pipeline.parameters.archive_name >>"
+
+workflows:
+  sandbox:
+    jobs:
+      - deploy_dev:
+        filters:
+          branches:
+            only:
+              - main

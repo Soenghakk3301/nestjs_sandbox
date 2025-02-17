@@ -1,0 +1,1 @@
+docker compose -f 'deploy/docker-compose.yml' -p 'nestjs_sandbox' run app yarn prisma migrate deploy
