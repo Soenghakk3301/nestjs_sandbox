@@ -8,6 +8,10 @@ parameters:
     type: string
     default: 'build.tar'
 
+orbs:
+  # See the Node orb documentation here: https://circleci.com/developer/orbs/orb/circleci/node
+  node: circleci/node@5.2
+
 jobs:
   deploy_dev:
     machine:
