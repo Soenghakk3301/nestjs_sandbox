@@ -13,6 +13,9 @@ RUN yarn install --omit=dev
 # Copy the rest of the application source code
 COPY . .
 
+# Install PM2 globally (for running the NestJS application in production)
+RUN yarn global add pm2
+
 # Generate Prisma Client (crucial for Prisma)
 RUN yarn prisma generate
 
