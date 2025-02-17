@@ -16,7 +16,7 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
-          known_hosts: ${{ secrets.AWS_EC2_KNOWN_HOSTS }}
+          known_hosts: 'github.com'
           if_key_exists: replace
 
       - name: Deploy to AWS EC2
