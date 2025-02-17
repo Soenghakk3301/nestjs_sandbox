@@ -93,7 +93,7 @@ jobs:
 
 workflows:
   version: 2
-  main_only:
+  sandbox:
     jobs:
       - deploy_dev:
           filters:
