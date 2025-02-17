@@ -59,7 +59,7 @@ jobs:
       - run:
           name: 'Copying Build To Remote Server'
           command: |
-            scp << pipeline.parameters.archive_name >> $SSH_USER_DEV@$SSH_HOST_DEV:<< pipeline.parameters.remote_workingdir >>
+            rsync -avz << pipeline.parameters.archive_name >> $SSH_USER_DEV@$SSH_HOST_DEV:<< pipeline.parameters.remote_workingdir >>
 
       - run:
           name: 'Unzipping Build'
